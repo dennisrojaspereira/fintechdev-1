@@ -1,0 +1,12 @@
+
+{
+  "name": "fintech-node",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.0",
+    "pg": "^8.12.0",
+    "prom-client": "^15.1.1"
+  }
+}

@@ -1,0 +1,192 @@
+
+services:
+  go:
+    build: ./go
+    ports:
+      - "8001:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  java:
+    build: ./java
+    ports:
+      - "8002:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  node:
+    build: ./node
+    ports:
+      - "8003:3000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  python:
+    build: ./python
+    ports:
+      - "8004:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  php:
+    build: ./php
+    ports:
+      - "8005:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  java-spring-classic:
+    build: ./java-spring-classic
+    ports:
+      - "8006:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  java-spring-virtual:
+    build: ./java-spring-virtual
+    ports:
+      - "8007:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=fintech
+      - POSTGRES_USER=fintech
+      - POSTGRES_PASSWORD=fintech
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fintech -d fintech"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    cpus: "0.5"
+    mem_limit: 512m
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.50.0
+    ports:
+      - "8088:8080"
+    privileged: true
+    pid: host
+    command:
+      - "--store_container_labels=true"
+      - "--whitelisted_container_labels=com.docker.compose.service"
+      - "--containerd=unix:///var/run/containerd/containerd.sock"
+    volumes:
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /run/k3s/containerd/containerd.sock:/run/containerd/containerd.sock:ro
+      - /var/lib/rancher-desktop:/var/lib/rancher-desktop:ro
+    cpus: "0.25"
+    mem_limit: 256m
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--web.enable-remote-write-receiver"]
+    cpus: "0.25"
+    mem_limit: 256m
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./observability/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./observability/grafana/dashboards-json:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    cpus: "0.25"
+    mem_limit: 256m
+  k6:
+    build: ./k6
+    depends_on:
+      - go
+      - java
+      - node
+      - python
+      - php
+      - java-spring-classic
+      - java-spring-virtual
+    working_dir: /scripts
+    volumes:
+      - ./k6:/scripts
+    entrypoint: ["/bin/sh", "-c"]
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+    command: ["set -e; for svc in go:8080 java:8080 node:3000 python:8000 php:8000 java-spring-classic:8080 java-spring-virtual:8080; do name=$${svc%%:*}; echo Testing $$svc; BASE_URL=http://$$svc k6 run --vus 20 --duration 30s --tag service=$$name --out experimental-prometheus-rw --summary-export summary-$${name}.json loadtest.js; done"]
+
+volumes:
+  postgres-data:

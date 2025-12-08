@@ -1,0 +1,47 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [container_label_com_docker_compose_service]
+        regex: (.+)
+        target_label: service
+        replacement: $1
+
+  - job_name: go
+    static_configs:
+      - targets: ['go:8080']
+
+  - job_name: java
+    static_configs:
+      - targets: ['java:8080']
+
+  - job_name: node
+    static_configs:
+      - targets: ['node:3000']
+
+  - job_name: python
+    static_configs:
+      - targets: ['python:8000']
+
+  - job_name: php
+    static_configs:
+      - targets: ['php:8000']
+
+  - job_name: java-spring-classic
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['java-spring-classic:8080']
+
+  - job_name: java-spring-virtual
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['java-spring-virtual:8080']

@@ -1,0 +1,111 @@
+{
+  "title": "Service CPU and Traffic",
+  "uid": "services-cpu-traffic",
+  "schemaVersion": 39,
+  "version": 7,
+  "description": "CPU (cAdvisor) + tráfego k6 + métricas de transferência.",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests (k6 http_reqs per service)",
+      "description": "Tráfego por serviço (req/s) capturado pelo k6.",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(k6_http_reqs_total{service!=\"\"}[1m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 0,
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "spanNulls": true,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "sum"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Transfer outcomes (por job)",
+      "description": "Taxa por resultado (success/erros) agrupada pelo job scrape de cada serviço.",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
+      "targets": [
+        {
+          "expr": "sum by (job, result) (rate(transfer_requests_total{result!=\"\"}[1m]))",
+          "legendFormat": "{{job}} - {{result}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "sum"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Account balance (por job)",
+      "description": "Saldo exportado por cada serviço (labels job e account).",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 18 },
+      "targets": [
+        {
+          "expr": "account_balance",
+          "legendFormat": "{{job}} - {{account}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull"]
+        },
+        "tooltip": { "mode": "single" }
+      }
+    }
+  ],
+  "time": { "from": "now-6h", "to": "now" }
+}
