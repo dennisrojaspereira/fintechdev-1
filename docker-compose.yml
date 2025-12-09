@@ -139,13 +139,13 @@ services:
     command:
       - "--store_container_labels=true"
       - "--whitelisted_container_labels=com.docker.compose.service"
-      - "--containerd=unix:///var/run/containerd/containerd.sock"
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker:/var/lib/docker:ro
       - /:/rootfs:ro
       - /sys:/sys:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /run/k3s/containerd/containerd.sock:/run/containerd/containerd.sock:ro
-      - /var/lib/rancher-desktop:/var/lib/rancher-desktop:ro
+    # Usa Docker via colima para descoberta dos containers
     cpus: "0.25"
     mem_limit: 256m
   prometheus:

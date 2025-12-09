@@ -2,7 +2,7 @@
   "title": "Service CPU and Traffic",
   "uid": "services-cpu-traffic",
   "schemaVersion": 39,
-  "version": 7,
+  "version": 8,
   "description": "CPU (cAdvisor) + tráfego k6 + métricas de transferência.",
   "panels": [
     {
@@ -104,6 +104,39 @@
           "calcs": ["lastNotNull"]
         },
         "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU por container (%)",
+      "description": "Uso de CPU por container (cAdvisor) em percent da média de 1m.",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 27 },
+      "targets": [
+        {
+          "expr": "sum by (container) (label_replace(rate(container_cpu_usage_seconds_total{id=~\"/docker/.+\"}[1m]), \"container\", \"$1\", \"id\", \".*/docker/(.+)\")) * 100",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "max"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
       }
     }
   ],
