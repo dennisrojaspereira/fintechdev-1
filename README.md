@@ -27,6 +27,7 @@ docker compose up -d --build
 | php | PHP 8.2 | http://localhost:8005 | (sem métricas Prometheus) |
 | java-spring-classic | Spring Boot (tomcat) | http://localhost:8006 | /actuator/prometheus |
 | java-spring-virtual | Spring Boot (virtual threads) | http://localhost:8007 | /actuator/prometheus |
+| dotnet | .NET 10 + OpenTelemetry | [http://localhost:8008](http://localhost:8008/scalar) | /metrics |
 | postgres | PostgreSQL 16 | localhost:5432 | n/a |
 | cadvisor | Runtime metrics | http://localhost:8088 | /metrics |
 | prometheus | Prometheus UI | http://localhost:9090 | /metrics |
@@ -62,7 +63,7 @@ O `db/init.sql` cria tabelas `accounts`, `ledger`, `processed_ops` e insere:
 - Saídas JSON ficam em `k6/summary-*.json` (montado via volume).
 - Para rodar manualmente apenas o k6:
 ```powershell
-docker compose run --rm k6 sh -c "set -e; for svc in go:8080 java:8080 node:3000 python:8000 php:8000 java-spring-classic:8080 java-spring-virtual:8080; do name=$${svc%%:*}; echo Testing $$svc; BASE_URL=http://$$svc k6 run --vus 20 --duration 30s --tag service=$$name --out experimental-prometheus-rw --summary-export summary-$${name}.json loadtest.js; done"
+docker compose run --rm k6 sh -c "set -e; for svc in go:8080 java:8080 node:3000 python:8000 php:8000 java-spring-classic:8080 java-spring-virtual:8080 dotnet:8080; do name=$${svc%%:*}; echo Testing $$svc; BASE_URL=http://$$svc k6 run --vus 20 --duration 30s --tag service=$$name --out experimental-prometheus-rw --summary-export summary-$${name}.json loadtest.js; done"
 ```
 
 ## Diagramas (Mermaid)

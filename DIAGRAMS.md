@@ -16,6 +16,7 @@ sequenceDiagram
     participant PHP as PHP svc
     participant SBC as Spring Classic
     participant SBV as Spring Virtual
+    participant Dotnet as .NET svc
     participant PG as PostgreSQL
 
     User->>Grafana: Consulta dashboards
@@ -30,6 +31,7 @@ sequenceDiagram
     k6->>PHP: POST /transfer
     k6->>SBC: POST /transfer
     k6->>SBV: POST /transfer
+    k6->>Dotnet: POST /transfer
 
     Go->>PG: begin/lock/read/update/commit
     Java->>PG: begin/lock/read/update/commit
@@ -38,7 +40,8 @@ sequenceDiagram
     PHP->>PG: begin/lock/read/update/commit
     SBC->>PG: begin/lock/read/update/commit
     SBV->>PG: begin/lock/read/update/commit
-
+    Dotnet->>PG: begin/lock/read/update/commit
+    
     Go-->>k6: resultado + métricas /metrics
     Java-->>k6: resultado + métricas /metrics
     Node-->>k6: resultado + métricas /metrics
@@ -46,6 +49,7 @@ sequenceDiagram
     PHP-->>k6: resultado (sem /metrics Prometheus)
     SBC-->>k6: resultado + /actuator/prometheus
     SBV-->>k6: resultado + /actuator/prometheus
+    Dotnet-->>k6: resultado + /metrics
 
     Go-->>Prom: /metrics scrape
     Java-->>Prom: /metrics scrape
@@ -53,6 +57,7 @@ sequenceDiagram
     Py-->>Prom: /metrics scrape
     SBC-->>Prom: /actuator/prometheus scrape
     SBV-->>Prom: /actuator/prometheus scrape
+    Dotnet-->>Prom: /metrics scrape
     note right of PHP: PHP não expõe /metrics; Prometheus gera aviso se configurado
 ```
 
@@ -74,6 +79,7 @@ graph TB
         phpSvc[[PHP svc :8000]]:::app
         sbcSvc[[Spring Classic :8080]]:::app
         sbvSvc[[Spring Virtual :8080]]:::app
+        dotnetSvc[[.NET svc :8080]]:::app
     end
 
     user --> grafana
@@ -86,6 +92,7 @@ graph TB
     k6 --> phpSvc
     k6 --> sbcSvc
     k6 --> sbvSvc
+    k6 --> dotnetSvc
 
     goSvc --> pg
     javaSvc --> pg
@@ -94,6 +101,7 @@ graph TB
     phpSvc --> pg
     sbcSvc --> pg
     sbvSvc --> pg
+    dotnetSvc --> pg
 
     prom --> grafana
     prom <-- cadv
@@ -104,6 +112,7 @@ graph TB
     pySvc --> prom
     sbcSvc --> prom
     sbvSvc --> prom
+    dotnetSvc --> prom
     phpSvc -.warn.-> prom
 
     classDef app fill=#1f78c1,stroke=#0f3c60,color=#fff

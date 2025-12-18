@@ -54,3 +54,7 @@ scrape_configs:
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: ['java-spring-virtual:8080']
+
+  - job_name: dotnet
+    static_configs:
+      - targets: ['dotnet:8080']
