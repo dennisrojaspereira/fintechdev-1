@@ -12,8 +12,8 @@ builder.Services.ConfigureHttpJsonOptions(opts =>
     opts.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 
 builder.Services.AddOpenTelemetry()
-    .WithMetrics(cfg => cfg.AddAspNetCoreInstrumentation().
-        AddMeter(TransferMetrics.MeterName)
+    .WithMetrics(cfg => cfg.AddAspNetCoreInstrumentation()
+        .AddMeter(TransferMetrics.MeterName)
         .AddPrometheusExporter());
 
 builder.Services.AddSingleton<NpgsqlDataSource>(sp =>
@@ -35,7 +35,7 @@ app.MapScalarApiReference();
 app.MapPrometheusScrapingEndpoint();
 
 app.MapPost("/transfer", async Task<Results<Ok<TransferOutput>, Ok<TransferWithBalancesOutput>, BadRequest<TransferOutput>, InternalServerError<TransferOutput>>> (
-    TranferInput input, NpgsqlDataSource dataSource, TransferMetrics metrics) =>
+    TransferInput input, NpgsqlDataSource dataSource, TransferMetrics metrics) =>
 {
     try
     {
@@ -96,8 +96,8 @@ app.MapPost("/transfer", async Task<Results<Ok<TransferOutput>, Ok<TransferWithB
     }
     catch (Exception e)
     {
-        return TypedResults.InternalServerError(TransferOutput.ServerError());
         Console.WriteLine(e);
+        return TypedResults.InternalServerError(TransferOutput.ServerError());
     }
 });
 
@@ -135,7 +135,7 @@ async Task Seed(NpgsqlDataSource dataSource)
         ("id2", "B"), ("balance2", 500m));
 }
 
-public record TranferInput(
+public record TransferInput(
     string FromAccountId,
     string ToAccountId,
     decimal Amount,
