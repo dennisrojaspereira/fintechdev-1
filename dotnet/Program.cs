@@ -52,6 +52,7 @@ app.MapPost("/transfer", async Task<Results<Ok<TransferOutput>, Ok<TransferWithB
             transaction, ("id", input.OperationId));
         if (isOperationProcessed is not null)
         {
+            await transaction.RollbackAsync();
             metrics.TransferInc(TransferMetrics.Duplicate);
             return TypedResults.Ok(TransferOutput.Ok("operation already processed"));
         }
@@ -63,11 +64,13 @@ app.MapPost("/transfer", async Task<Results<Ok<TransferOutput>, Ok<TransferWithB
 
         if (fromBalance is null || toBalance is null)
         {
+            await transaction.RollbackAsync();
             metrics.TransferInc(TransferMetrics.AccountNotFound);
             return TypedResults.BadRequest(TransferOutput.Error("account not found"));
         }
         if (fromBalance < input.Amount)
         {
+            await transaction.RollbackAsync();
             metrics.TransferInc(TransferMetrics.InsufficientFunds);
             return TypedResults.BadRequest(TransferOutput.Error("insufficient funds"));
         }
