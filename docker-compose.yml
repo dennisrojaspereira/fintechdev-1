@@ -112,6 +112,22 @@ services:
     restart: on-failure
     cpus: "0.5"
     mem_limit: 256m
+  dotnet:
+    build: ./dotnet
+    ports:
+      - "8008:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fintech
+      - DB_PASSWORD=fintech
+      - DB_NAME=fintech
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    cpus: "0.5"
+    mem_limit: 256m
   postgres:
     image: postgres:16-alpine
     environment:
@@ -180,13 +196,14 @@ services:
       - php
       - java-spring-classic
       - java-spring-virtual
+      - dotnet
     working_dir: /scripts
     volumes:
       - ./k6:/scripts
     entrypoint: ["/bin/sh", "-c"]
     environment:
       - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
-    command: ["set -e; for svc in go:8080 java:8080 node:3000 python:8000 php:8000 java-spring-classic:8080 java-spring-virtual:8080; do name=$${svc%%:*}; echo Testing $$svc; BASE_URL=http://$$svc k6 run --vus 20 --duration 30s --tag service=$$name --out experimental-prometheus-rw --summary-export summary-$${name}.json loadtest.js; done"]
+    command: ["set -e; for svc in go:8080 java:8080 node:3000 python:8000 php:8000 java-spring-classic:8080 java-spring-virtual:8080 dotnet:8080; do name=$${svc%%:*}; echo Testing $$svc; BASE_URL=http://$$svc k6 run --vus 20 --duration 30s --tag service=$$name --out experimental-prometheus-rw --summary-export summary-$${name}.json loadtest.js; done"]
 
 volumes:
   postgres-data:
