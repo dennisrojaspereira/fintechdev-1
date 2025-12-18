@@ -170,7 +170,7 @@ public record DebugStateOutput(
     List<LedgerEntry> Ledger, 
     List<string> ProcessedOps);
 public record Account(string Id, decimal Balance);
-public record LedgerEntry(string Type, string AccountId, decimal Amount, String At);
+public record LedgerEntry(string Type, string AccountId, decimal Amount, string At);
 
 public sealed class TransferMetrics(IMeterFactory meterFactory)
 {
